@@ -1,5 +1,6 @@
 ﻿using Caliburn.Micro;
 using ServiceDeskToolsApp.Commands;
+using ServiceDeskToolsApp.Events;
 using ServiceDeskToolsApp.Menu;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,10 +8,10 @@ using System.Windows.Input;
 
 namespace ServiceDeskToolsApp.Views
 {
-    /// <summary>
-    /// Interaction logic for ShellView.xaml
-    /// </summary>
-    public partial class ShellView : IHandle<UpdateMenuEvent>
+	/// <summary>
+	/// Interaction logic for ShellView.xaml
+	/// </summary>
+	public partial class ShellView : IHandle<UpdateMenuEvent>
     {
         private readonly IMenuSet _menu;
 

@@ -2,11 +2,13 @@
 using EzActiveDirectory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ServiceDeskToolsApp.Events;
 using ServiceDeskToolsApp.Menu;
 using ServiceDeskToolsApp.Models;
 using ServiceDeskToolsApp.Settings;
 using ServiceDeskToolsApp.Theming;
 using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -17,7 +19,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace ServiceDeskToolsApp.ViewModels;
-public class ShellViewModel : Conductor<object>
+public class ShellViewModel : Conductor<object>, IHandle<UpdateDomainListEvent>
 {
 	private readonly ILogger<ShellViewModel> _logger;
 	private readonly ActiveDirectory _ad;
@@ -25,13 +27,14 @@ public class ShellViewModel : Conductor<object>
 	private readonly IConfiguration _config;
 	private bool _choosingTheme;
 	private bool _updateAvailable = false;
-	private bool _settingsOpened;
+	private bool _domainSettingsOpened;
+	private bool _settingsPanelOpened;
 
 	public AvailableDomain SelectedDomain
 	{
 		get
 		{
-			return DomainList.Domains?.First(x => x.Domain == _ad.Domain);
+			return DomainListSet.Domains?.First(x => x.Domain == _ad.Domain);
 		}
 		set
 		{
@@ -88,7 +91,7 @@ public class ShellViewModel : Conductor<object>
 			}
 		}
 	}
-	public NotificationViewModel Notifications { get; } = new NotificationViewModel();
+	public NotificationViewModel Notifications { get; } = new();
 	public bool UpdateAvailable
 	{
 		get { return _updateAvailable; }
@@ -109,19 +112,31 @@ public class ShellViewModel : Conductor<object>
 	}
 	public bool DomainSettingsOpened
 	{
-		get => _settingsOpened;
+		get => _domainSettingsOpened;
 		set
 		{
-			_settingsOpened = value;
+			_domainSettingsOpened = value;
 			NotifyOfPropertyChange();
 			NotifyOfPropertyChange(() => SelectedDomain);
 		}
 	}
+	public bool SettingsPanelOpened
+	{
+		get { return _settingsPanelOpened; }
+		set
+		{
+			_settingsPanelOpened = value;
+			NotifyOfPropertyChange();
+		}
+	}
+	public SettingsViewModel Settings { get; }
+	public ObservableCollection<AvailableDomain> DomainList { get; }
 	public IThemeManager ThemeManager { get; }
-	public AvailableDomainSet DomainList { get; }
+	public AvailableDomainSet DomainListSet { get; }
 	public IMenuSet Menu { get; }
 
 	public ICommand UpdateApplicationCommand { get; }
+	public ICommand OpenSettingsCommand { get; }
 	public ICommand OpenThemePanelCommand { get; }
 	public ICommand SaveThemeCommand { get; }
 	public ICommand ThemeOnCommand { get; }
@@ -131,16 +146,24 @@ public class ShellViewModel : Conductor<object>
 	public ICommand ChangeDomainCommand { get; }
 
 	public ShellViewModel(ILogger<ShellViewModel> logger,
-		IThemeManager themeManager, ActiveDirectory ad, AvailableDomainSet domains, ApplicationSettings appSettings, IMenuSet menu, IConfiguration config)
+		IThemeManager themeManager,
+		ActiveDirectory ad,
+		AvailableDomainSet domains,
+		ApplicationSettings appSettings,
+		IMenuSet menu,
+		IConfiguration config,
+		IEventAggregator eventAggregator)
 	{
-		ActivateItemAsync(IoC.Get<ADViewModel>(), new CancellationToken());
 		_logger = logger;
-		ThemeManager = themeManager;
 		_ad = ad;
-		DomainList = domains;
 		_appSettings = appSettings;
-		Menu = menu;
 		_config = config;
+
+		ThemeManager = themeManager;
+		DomainListSet = domains;
+		Menu = menu;
+		Settings = IoC.Get<SettingsViewModel>();
+		DomainList = new(DomainListSet.Domains);
 
 		UpdateApplicationCommand = new RelayCommand(() => throw new NotImplementedException());
 		OpenThemePanelCommand = new RelayCommand(() => ChoosingTheme = true);
@@ -150,6 +173,11 @@ public class ShellViewModel : Conductor<object>
 		OpenDomainSettingsCommand = new RelayCommand(() => DomainSettingsOpened = true);
 		SaveDomainCredentialsCommand = new RelayCommand(async () => await SaveDomainCredentials());
 		ChangeDomainCommand = new RelayCommand(ChangeToNextAvailableDomain);
+		OpenSettingsCommand = new RelayCommand(() => SettingsPanelOpened = true);
+
+		eventAggregator.SubscribeOnUIThread(this);
+
+		ActivateItemAsync(IoC.Get<ADViewModel>(), new CancellationToken());
 	}
 
 	public async Task SaveDomainCredentials()
@@ -158,7 +186,7 @@ public class ShellViewModel : Conductor<object>
 		{
 			Domains = []
 		};
-		foreach (var dom in DomainList.Domains)
+		foreach (var dom in DomainListSet.Domains)
 		{
 			var d = new AvailableDomain
 			{
@@ -199,27 +227,40 @@ public class ShellViewModel : Conductor<object>
 	private void ChangeToNextAvailableDomain()
 	{
 		int index = 0;
-		for (int i = 0; i < DomainList.Domains.Count; i++)
+		for (int i = 0; i < DomainListSet.Domains.Count; i++)
 		{
-			if (SelectedDomain == DomainList.Domains[i])
+			if (SelectedDomain == DomainListSet.Domains[i])
 			{
 				index = ++i;
 				break;
 			}
 		}
 
-		if (index == DomainList.Domains.Count)
+		if (index == DomainListSet.Domains.Count)
 		{
 			index = 0;
 		}
-		SelectedDomain = DomainList.Domains[index];
-	}
-	private async Task CloseAppAsync()
-	{
-		await TryCloseAsync();
+		SelectedDomain = DomainListSet.Domains[index];
 	}
 	private void ChangeTheme(string theme)
 	{
 		ThemeManager.CurrentScheme = theme;
+	}
+
+	Task IHandle<UpdateDomainListEvent>.HandleAsync(UpdateDomainListEvent message, CancellationToken cancellationToken)
+	{
+		DomainList.Add(message.NewDomain);
+		DomainListSet.Domains.Add(message.NewDomain);
+
+		Task.Run(() =>
+		{
+			var ad = new ActiveDirectory();
+			ad.Initialize(message.NewDomain.Domain, message.NewDomain.LdapPath);
+			var controllers = ad.GetDomainControllers().ToArray();
+			message.NewDomain.DomainControllers = controllers;
+			message.NewDomain.DefaultDomain = controllers[0];
+		});
+
+		return Task.CompletedTask;
 	}
 }
