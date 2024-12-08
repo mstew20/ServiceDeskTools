@@ -1,0 +1,95 @@
+﻿<UserControl x:Class="ServiceDeskToolsApp.Views.BitlockerSearchView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ServiceDeskToolsApp.Views" xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="auto" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="{Binding Text}" 
+                   VerticalAlignment="Center"/>
+        <TextBox x:Name="SearchTerm" 
+                 Grid.Column="1"
+                 VerticalAlignment="Center"
+                 Margin="10 0 10 0"
+                 CharacterCasing="Upper" />
+        <Button x:Name="Search" 
+                Content="Find" 
+                Grid.Column="2" 
+                VerticalAlignment="Center"
+                IsDefault="True"/>
+
+        <ListView x:Name="Keys" 
+              Grid.Row="1" 
+              Grid.ColumnSpan="3"
+              Margin="0 10 0 10"
+              SelectedItem="{Binding SelectedItem}">
+            <ListView.View>
+                <GridView>
+                    <GridView.Columns>
+                        <GridViewColumn Header="Date" DisplayMemberBinding="{Binding Date}"/>
+                        <GridViewColumn Header="Key ID" DisplayMemberBinding="{Binding KeyID}"/>
+                    </GridView.Columns>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <GroupBox Grid.Row="2" Grid.ColumnSpan="3" Header="Details">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Recovery Password:" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding SelectedItem.Key}"
+                     Style="{StaticResource DisabledText}"
+                     FontSize="14"
+                     Grid.Column="1"/>
+
+                <TextBlock Text="Computer Name:" Grid.Row="2" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding SelectedItem.ComputerName}"
+                     Grid.Row="2" Grid.Column="1"
+                     FontSize="14"
+                     Style="{StaticResource DisabledText}"/>
+
+                <TextBlock Text="Date:" Grid.Row="3" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding SelectedItem.Date}"
+                     Grid.Row="3" Grid.Column="1"
+                     FontSize="14"
+                     Style="{StaticResource DisabledText}"/>
+
+                <TextBlock Text="Password ID:" Grid.Row="4" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding SelectedItem.KeyID, Mode=OneWay}"
+                     Grid.Row="4" Grid.Column="1"
+                     FontSize="14"
+                     Style="{StaticResource DisabledText}"/>
+            </Grid>
+        </GroupBox>
+        <Grid Grid.RowSpan="3" Grid.ColumnSpan="3"
+              Visibility="{Binding IsSearching, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border
+                Background="{DynamicResource MahApps.Brushes.Gray10}" Opacity="0.5"/>
+            <mah:ProgressRing />
+        </Grid>
+    </Grid>
+</UserControl>

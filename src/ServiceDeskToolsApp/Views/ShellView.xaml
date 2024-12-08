@@ -1,0 +1,212 @@
+﻿<mah:MetroWindow x:Class="ServiceDeskToolsApp.Views.ShellView"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                 xmlns:local="clr-namespace:ServiceDeskToolsApp.Views"
+                 xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:selectors="clr-namespace:ServiceDeskToolsApp.Menu"
+                 xmlns:system="clr-namespace:System;assembly=netstandard"
+                 xmlns:vm="clr-namespace:ServiceDeskToolsApp.ViewModels"
+                 Title="Service Desk Tools"
+                 Width="850"
+                 Height="502"
+                 TitleCharacterCasing="Normal"
+                 WindowStartupLocation="CenterScreen"
+                 mc:Ignorable="d">
+    <mah:MetroWindow.Resources>
+        <selectors:MenuItemContainerTemplateSelector x:Key="_menuItemContainerTemplateSelector" />
+        <HierarchicalDataTemplate DataType="{x:Type vm:MenuItemViewModel}" ItemsSource="{Binding Children}">
+            <MenuItem Command="{Binding Command}"
+                      Header="{Binding Header}"
+                      InputGestureText="{Binding GetShortcutText}"
+                      ItemContainerTemplateSelector="{StaticResource _menuItemContainerTemplateSelector}"
+                      UsesItemContainerTemplate="true" />
+        </HierarchicalDataTemplate>
+        <DataTemplate DataType="{x:Type vm:SeparatorViewModel}">
+            <Separator />
+        </DataTemplate>
+    </mah:MetroWindow.Resources>
+    <mah:MetroWindow.InputBindings>
+        <KeyBinding Key="C"
+                    Command="{Binding ChangeDomainCommand}"
+                    Modifiers="Ctrl+Shift" />
+    </mah:MetroWindow.InputBindings>
+    <mah:MetroWindow.Flyouts>
+        <mah:FlyoutsControl>
+            <mah:Flyout x:Name="ThemeFlyout"
+                        Width="300"
+                        Header="Theme"
+                        IsOpen="{Binding ChoosingTheme}"
+                        Position="Right"
+                        Theme="Adapt">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Top">
+                        <mah:ToggleSwitch ContentDirection="LeftToRight"
+                                          IsOn="{Binding ThemeManager.CurrentScheme, Converter={StaticResource ThemeToBooleanConverter}, ConverterParameter=Dark}"
+                                          OffCommand="{Binding ThemeOffCommand}"
+                                          OffContent="Light Mode"
+                                          OnCommand="{Binding ThemeOnCommand}"
+                                          OnContent="Dark Mode" />
+                    </Grid>
+
+                    <ListView Grid.Row="1"
+                              Margin="0,15,0,0"
+                              ItemsSource="{Binding ThemeManager.Colors}"
+                              SelectedItem="{Binding ThemeManager.CurrentColor}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Rectangle Grid.Column="0"
+                                               Width="30"
+                                               Height="30"
+                                               Fill="{Binding ShowcaseBrush}"
+                                               Stroke="White" />
+                                    <TextBlock Grid.Column="1"
+                                               Margin="-30,0,0,0"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="18"
+                                               Text="{Binding ColorScheme}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <Button Grid.Row="2"
+                            Margin="0,10,0,0"
+                            Command="{Binding SaveThemeCommand}"
+                            Content="Save Changes" />
+                </Grid>
+            </mah:Flyout>
+            <mah:Flyout x:Name="DomainSettingsFlyout"
+                        Width="300"
+                        Header="Domain Settings"
+                        IsOpen="{Binding DomainSettingsOpened}"
+                        Position="Right"
+                        Theme="Adapt">
+                <Grid Margin="25">
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock HorizontalAlignment="Center"
+                               FontSize="20"
+                               Text="{Binding SelectedDomain.Name, StringFormat={}{0} Domain}" />
+
+                    <Grid Grid.Row="1" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" Text="Controller:" />
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding SelectedDomain.DomainControllers}"
+                                  SelectedItem="{Binding SelectedController, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+
+                    <Grid Grid.Row="2" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" Text="Username:" />
+                        <TextBox Grid.Column="1" Text="{Binding SelectedDomain.Credentials.Username, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+
+                    <Grid Grid.Row="3" Margin="0,10,0,0">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" Text="Password:" />
+                        <TextBox Grid.Column="1" Text="{Binding SelectedDomain.Credentials.Password, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+
+                    <Grid Grid.Row="4" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" Text="Domain:" />
+                        <TextBox Grid.Column="1" Text="{Binding SelectedDomain.Credentials.Domain, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+
+                    <Button Grid.Row="5"
+                            Margin="0,15,0,0"
+                            Command="{Binding SaveDomainCredentialsCommand}"
+                            Content="Save" />
+                </Grid>
+            </mah:Flyout>
+        </mah:FlyoutsControl>
+    </mah:MetroWindow.Flyouts>
+
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <ComboBox Width="120"
+                      Margin="2"
+                      DisplayMemberPath="Name"
+                      ItemsSource="{Binding DomainList.Domains}"
+                      SelectedItem="{Binding SelectedDomain}" />
+            <Button Command="{Binding OpenDomainSettingsCommand}" ToolTip="Settings">
+                <icons:PackIconMaterial Width="15"
+                                        Height="15"
+                                        VerticalAlignment="Center"
+                                        Kind="AccountSettings" />
+            </Button>
+            <Button Command="{Binding OpenThemePanelCommand}" ToolTip="Change Theme">
+                <icons:PackIconMaterial Width="15"
+                                        Height="15"
+                                        VerticalAlignment="Center"
+                                        Kind="Palette" />
+            </Button>
+            <Button Command="{Binding UpdateApplicationCommand}"
+                    IsEnabled="False"
+                    ToolTip="Update">
+                <mah:Badged Badge="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}, Path=DataContext.UpdateAvailable, Converter={StaticResource BoolToStringConverter}}"
+                            BadgeBackground="Lime"
+                            BadgeFontWeight="Bold"
+                            BadgeForeground="{DynamicResource MahApps.Brushes.Accent}">
+                    <icons:PackIconMaterial Kind="Download" />
+                </mah:Badged>
+            </Button>
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
+
+    <Grid>
+        <DockPanel>
+            <Menu x:Name="Menu"
+                  DockPanel.Dock="Top"
+                  ItemContainerTemplateSelector="{StaticResource _menuItemContainerTemplateSelector}"
+                  ItemsSource="{Binding Menu.Items}"
+                  UsesItemContainerTemplate="true" />
+
+            <ContentControl x:Name="ActiveItem"
+                            Margin="15"
+                            IsTabStop="False" />
+        </DockPanel>
+
+        <ContentControl x:Name="Notifications" VerticalAlignment="Top" />
+
+    </Grid>
+</mah:MetroWindow>
