@@ -69,10 +69,10 @@ public class SettingsViewModel : Screen
 		Name = string.Empty;
 		Ldap = string.Empty;
 
-		var json = File.ReadAllText("appsettings.json");
+		var json = await File.ReadAllTextAsync("appsettings.json");
 		JsonNode doc = JsonNode.Parse(json);
 		var jsonArray = doc["AvailableDomains"]["Domains"].AsArray();
 		jsonArray.Add(new { newDomain.Name, newDomain.Domain, newDomain.LdapPath });
-		File.WriteAllText("appsettings.json", doc.ToString());
+		await File.WriteAllTextAsync("appsettings.json", doc.ToString());
 	}
 }
