@@ -1,0 +1,3 @@
+[submodule "src/ActiveDirectory"]
+	path = src/ActiveDirectory
+	url = https://github.com/mstew20/ActiveDirectory
