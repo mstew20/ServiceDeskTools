@@ -1,6 +1,7 @@
 ﻿<mah:MetroWindow x:Class="ServiceDeskToolsApp.Views.ShellView"
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:cal="http://caliburnmicro.com"
                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                  xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
                  xmlns:local="clr-namespace:ServiceDeskToolsApp.Views"
@@ -158,6 +159,16 @@
                             Content="Save" />
                 </Grid>
             </mah:Flyout>
+            <mah:Flyout x:Name="SettingsFlyout"
+                        Width="300"
+                        Header="Settings"
+                        IsOpen="{Binding SettingsPanelOpened}"
+                        Position="Right"
+                        Theme="Adapt">
+                <ContentControl x:Name="Settings"
+                                Margin="10"
+                                cal:Bind.Model="{Binding}" />
+            </mah:Flyout>
         </mah:FlyoutsControl>
     </mah:MetroWindow.Flyouts>
 
@@ -166,7 +177,7 @@
             <ComboBox Width="120"
                       Margin="2"
                       DisplayMemberPath="Name"
-                      ItemsSource="{Binding DomainList.Domains}"
+                      ItemsSource="{Binding DomainList}"
                       SelectedItem="{Binding SelectedDomain}" />
             <Button Command="{Binding OpenDomainSettingsCommand}" ToolTip="Settings">
                 <icons:PackIconMaterial Width="15"
@@ -179,6 +190,12 @@
                                         Height="15"
                                         VerticalAlignment="Center"
                                         Kind="Palette" />
+            </Button>
+            <Button Command="{Binding OpenSettingsCommand}" ToolTip="Settings">
+                <icons:PackIconMaterial Width="15"
+                                        Height="15"
+                                        VerticalAlignment="Center"
+                                        Kind="Cog" />
             </Button>
             <Button Command="{Binding UpdateApplicationCommand}"
                     IsEnabled="False"

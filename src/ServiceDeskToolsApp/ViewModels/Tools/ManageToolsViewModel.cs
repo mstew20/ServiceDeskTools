@@ -1,4 +1,5 @@
 ﻿using Caliburn.Micro;
+using ServiceDeskToolsApp.Events;
 using ServiceDeskToolsApp.Menu;
 using ServiceDeskToolsApp.Models;
 using ServiceDeskToolsApp.Settings;
