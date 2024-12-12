@@ -1,11 +1,10 @@
 ﻿using ServiceDeskToolsApp.Models;
 
 namespace ServiceDeskToolsApp.Events;
-internal class UpdateDomainListEvent
+internal record UpdateDomainListEvent(AvailableDomain Domain, UpdateAction Action);
+
+internal enum UpdateAction
 {
-	public AvailableDomain NewDomain { get; }
-	public UpdateDomainListEvent(AvailableDomain newDomain)
-	{
-		NewDomain = newDomain;
-	}
+	Add,
+	Delete
 }

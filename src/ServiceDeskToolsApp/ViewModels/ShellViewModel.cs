@@ -249,17 +249,27 @@ public class ShellViewModel : Conductor<object>, IHandle<UpdateDomainListEvent>
 
 	Task IHandle<UpdateDomainListEvent>.HandleAsync(UpdateDomainListEvent message, CancellationToken cancellationToken)
 	{
-		DomainList.Add(message.NewDomain);
-		DomainListSet.Domains.Add(message.NewDomain);
-
-		Task.Run(() =>
+		switch (message.Action)
 		{
-			var ad = new ActiveDirectory();
-			ad.Initialize(message.NewDomain.Domain, message.NewDomain.LdapPath);
-			var controllers = ad.GetDomainControllers().ToArray();
-			message.NewDomain.DomainControllers = controllers;
-			message.NewDomain.DefaultDomain = controllers[0];
-		});
+			case UpdateAction.Add:
+				DomainList.Add(message.Domain);
+				DomainListSet.Domains.Add(message.Domain);
+				Task.Run(() =>
+				{
+					var ad = new ActiveDirectory();
+					ad.Initialize(message.Domain.Domain, message.Domain.LdapPath);
+					var controllers = ad.GetDomainControllers().ToArray();
+					message.Domain.DomainControllers = controllers;
+					message.Domain.DefaultDomain = controllers[0];
+				});
+				break;
+			case UpdateAction.Delete:
+				DomainList.Remove(message.Domain);
+				DomainListSet.Domains.Remove(message.Domain);
+				break;
+			default:
+				break;
+		}
 
 		return Task.CompletedTask;
 	}
