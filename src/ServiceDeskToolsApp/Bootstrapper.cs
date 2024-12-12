@@ -154,7 +154,7 @@ public class Bootstrapper : BootstrapperBase
 		}
 		var activeDomain = domains.Find(x => x.Domain == currentDomain);
 		var ad = Host.Services.GetService<ActiveDirectory>();
-		ad.Initialize(activeDomain?.Domain, activeDomain?.LdapPath);
+		ad.Initialize(activeDomain?.Domain ?? "", activeDomain?.LdapPath ?? "");
 		ad.ChangeCredentials(domains.FirstOrDefault(x => x.Domain == ad.Domain)?.Credentials);
 	}
 	private static async Task SetupDomainSettings(List<AvailableDomain> domains, ApplicationSettings applicationSettings)
