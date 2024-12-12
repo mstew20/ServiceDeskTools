@@ -34,20 +34,20 @@ public class ShellViewModel : Conductor<object>, IHandle<UpdateDomainListEvent>
 	{
 		get
 		{
-			return DomainListSet.Domains?.First(x => x.Domain == _ad.Domain);
+			return DomainListSet.Domains?.FirstOrDefault(x => x.Domain == _ad.Domain);
 		}
 		set
 		{
-			if (!string.IsNullOrWhiteSpace(value.LdapPath))
+			if (!string.IsNullOrWhiteSpace(value?.LdapPath))
 			{
 				_ad.ChangeLdap(value.LdapPath);
 			}
 			else
 			{
-				_ad.ChangeDomain(value.Domain);
+				_ad.ChangeDomain(value?.Domain);
 			}
-			_ad.ChangeCredentials(value.Credentials);
-			SelectedController = value.DefaultDomain;
+			_ad.ChangeCredentials(value?.Credentials);
+			SelectedController = value?.DefaultDomain;
 			NotifyOfPropertyChange();
 		}
 	}
@@ -72,7 +72,10 @@ public class ShellViewModel : Conductor<object>, IHandle<UpdateDomainListEvent>
 				SelectedDomain.LdapPath = ldap;
 				_ad.ChangeLdap(ldap);
 			}
-			SelectedDomain.DefaultDomain = value;
+			if (SelectedDomain is not null)
+			{
+				SelectedDomain.DefaultDomain = value;
+			}
 			NotifyOfPropertyChange();
 		}
 	}
@@ -163,7 +166,7 @@ public class ShellViewModel : Conductor<object>, IHandle<UpdateDomainListEvent>
 		DomainListSet = domains;
 		Menu = menu;
 		Settings = IoC.Get<SettingsViewModel>();
-		DomainList = new(DomainListSet.Domains);
+		DomainList = new(DomainListSet.Domains ?? []);
 
 		UpdateApplicationCommand = new RelayCommand(() => throw new NotImplementedException());
 		OpenThemePanelCommand = new RelayCommand(() => ChoosingTheme = true);
@@ -254,6 +257,7 @@ public class ShellViewModel : Conductor<object>, IHandle<UpdateDomainListEvent>
 			case UpdateAction.Add:
 				DomainList.Add(message.Domain);
 				DomainListSet.Domains.Add(message.Domain);
+				SelectedDomain = message.Domain;
 				Task.Run(() =>
 				{
 					var ad = new ActiveDirectory();

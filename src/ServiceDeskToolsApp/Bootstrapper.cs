@@ -100,10 +100,14 @@ public class Bootstrapper : BootstrapperBase
 		SetupLocalAppdata(appSettings);
 
 		var domains = config.GetSection("AvailableDomains").Get<AvailableDomainSet>();
+		if (domains.Domains is null)
+		{
+			domains.Domains = [];
+		}
 		await SetupDomainSettings(domains.Domains, appSettings);
 
 		Host.Services.GetRequiredService<AvailableDomainSet>().Initialize(domains.Domains);
-		SetupActiveDirectory(config["AcitveDirectory:DomainName"], domains.Domains);
+		SetupActiveDirectory(config["ActiveDirectory:DomainName"], domains.Domains);
 
 		Host.Services.GetRequiredService<IThemeManager>().LoadTheme();
 		await DisplayRootViewForAsync<ShellViewModel>();
@@ -150,8 +154,8 @@ public class Bootstrapper : BootstrapperBase
 		}
 		var activeDomain = domains.Find(x => x.Domain == currentDomain);
 		var ad = Host.Services.GetService<ActiveDirectory>();
-		ad.Initialize(activeDomain.Domain, activeDomain.LdapPath);
-		ad.ChangeCredentials(domains.First(x => x.Domain == ad.Domain).Credentials);
+		ad.Initialize(activeDomain?.Domain, activeDomain?.LdapPath);
+		ad.ChangeCredentials(domains.FirstOrDefault(x => x.Domain == ad.Domain)?.Credentials);
 	}
 	private static async Task SetupDomainSettings(List<AvailableDomain> domains, ApplicationSettings applicationSettings)
 	{

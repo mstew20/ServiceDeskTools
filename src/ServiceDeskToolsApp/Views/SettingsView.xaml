@@ -16,6 +16,7 @@
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
 
         <ListView x:Name="Domains">
@@ -67,8 +68,18 @@
             <TextBox x:Name="Ldap" Grid.Column="1" />
         </Grid>
 
+        <Grid Grid.Row="4" Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" SharedSizeGroup="Labels" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <CheckBox HorizontalContentAlignment="Left"
+                      Content="Is Default"
+                      IsChecked="{Binding IsDefault}" />
+        </Grid>
+
         <Button x:Name="Add"
-                Grid.Row="4"
+                Grid.Row="5"
                 HorizontalAlignment="Center">
             <StackPanel Orientation="Horizontal">
                 <icons:PackIconMaterial Margin="0,0,5,0" Kind="PenPlus" />

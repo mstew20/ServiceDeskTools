@@ -17,6 +17,7 @@ public class SettingsViewModel : Screen
 	private string _name;
 	private string _domain;
 	private string _ldap;
+	private bool _isDefault;
 
 	public ObservableCollection<AvailableDomain> Domains { get; set; }
 	public string Name
@@ -46,12 +47,21 @@ public class SettingsViewModel : Screen
 			NotifyOfPropertyChange();
 		}
 	}
+	public bool IsDefault
+	{
+		get => _isDefault;
+		set
+		{
+			_isDefault = value;
+			NotifyOfPropertyChange();
+		}
+	}
 
 	public ICommand DeleteCommand { get; }
 
 	public SettingsViewModel(AvailableDomainSet availableDomains, IEventAggregator eventAggregator, IConfiguration config)
 	{
-		Domains = new(availableDomains.Domains);
+		Domains = new(availableDomains.Domains ?? new());
 		_events = eventAggregator;
 		_config = config;
 
@@ -71,15 +81,25 @@ public class SettingsViewModel : Screen
 		var message = new UpdateDomainListEvent(newDomain, UpdateAction.Add);
 		await _events.PublishOnUIThreadAsync(message);
 
-		Domain = string.Empty;
-		Name = string.Empty;
-		Ldap = string.Empty;
-
 		var json = await File.ReadAllTextAsync("appsettings.json");
 		JsonNode doc = JsonNode.Parse(json);
 		var jsonArray = doc["AvailableDomains"]["Domains"].AsArray();
 		jsonArray.Add(new { newDomain.Name, newDomain.Domain, newDomain.LdapPath });
+
+		if (IsDefault)
+		{
+			JsonNode newNode = new JsonObject();
+			newNode["DomainName"] = newDomain.Domain;
+			newNode["LdapPath"] = newDomain.LdapPath;
+			doc["ActiveDirectory"] = newNode;
+		}
+
 		await File.WriteAllTextAsync("appsettings.json", doc.ToString());
+
+		Domain = string.Empty;
+		Name = string.Empty;
+		Ldap = string.Empty;
+		IsDefault = false;
 	}
 
 	private async Task Delete(AvailableDomain toDelete)
@@ -92,6 +112,13 @@ public class SettingsViewModel : Screen
 		JsonNode doc = JsonNode.Parse(json);
 		var jsonArray = doc["AvailableDomains"]["Domains"].AsArray();
 		jsonArray.Remove(jsonArray.Where(x => x["Name"].GetValue<string>() == toDelete.Name).First());
+
+		if (doc["ActiveDirectory"]["DomainName"] is not null && doc["ActiveDirectory"]["DomainName"].GetValue<string>() == toDelete.Domain)
+		{
+			doc["ActiveDirectory"].AsObject().Remove("DomainName");
+			doc["ActiveDirectory"].AsObject().Remove("LdapPath");
+		}
+
 		await File.WriteAllTextAsync("appsettings.json", doc.ToString());
 	}
 }
