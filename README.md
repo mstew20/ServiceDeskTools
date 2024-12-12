@@ -10,5 +10,3 @@ Tools to work with active directory.
    - Save/change notes section on account
    - Password Generator
    - Ability to reset multiple account passwords/New hire account info process.
-   - Email confirmation parsing from JSON data
-   - Contact lists for different deparment and all.
