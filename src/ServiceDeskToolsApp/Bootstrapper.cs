@@ -92,12 +92,13 @@ public class Bootstrapper : BootstrapperBase
 		var config = Host.Services.GetRequiredService<IConfiguration>();
 		var logger = Host.Services.GetRequiredService<ILogger<Bootstrapper>>();
 		var menu = Host.Services.GetRequiredService<IMenuSet>();
-		await menu.Build();
 
 		var appSettings = Host.Services.GetService<ApplicationSettings>();
 		var settings = config.GetSection("ApplicationSettings").Get<ApplicationSettings>();
 		appSettings.Initialize(settings.LocalDataFiles, settings.ThemeSettings, settings.SettingsFile);
 		SetupLocalAppdata(appSettings);
+
+		await menu.Build();
 
 		var domains = config.GetSection("AvailableDomains").Get<AvailableDomainSet>();
 		if (domains.Domains is null)
