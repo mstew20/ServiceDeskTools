@@ -105,7 +105,7 @@ public class Bootstrapper : BootstrapperBase
 		{
 			domains.Domains = [];
 		}
-		await SetupDomainSettings(domains.Domains, appSettings);
+		await SetupDomainSettings(domains.Domains, appSettings, config);
 
 		Host.Services.GetRequiredService<AvailableDomainSet>().Initialize(domains.Domains);
 		SetupActiveDirectory(config["ActiveDirectory:DomainName"], domains.Domains);
@@ -158,7 +158,7 @@ public class Bootstrapper : BootstrapperBase
 		ad.Initialize(activeDomain?.Domain ?? "", activeDomain?.LdapPath ?? "");
 		ad.ChangeCredentials(domains.FirstOrDefault(x => x.Domain == ad.Domain)?.Credentials);
 	}
-	private static async Task SetupDomainSettings(List<AvailableDomain> domains, ApplicationSettings applicationSettings)
+	private static async Task SetupDomainSettings(List<AvailableDomain> domains, ApplicationSettings applicationSettings, IConfiguration config)
 	{
 		var file = applicationSettings.SettingsFile;
 		if (File.Exists(file))
@@ -175,7 +175,7 @@ public class Bootstrapper : BootstrapperBase
 				if (!string.IsNullOrWhiteSpace(loadedDomain.Credentials.Password))
 				{
 					var bytes = Convert.FromBase64String(loadedDomain.Credentials.Password);
-					var entropy = Encoding.UTF8.GetBytes("salty");
+					var entropy = Encoding.UTF8.GetBytes(config["entropy"]);
 					loadedDomain.Credentials.Password = Encoding.UTF8.GetString(ProtectedData.Unprotect(bytes, entropy, DataProtectionScope.CurrentUser));
 				}
 				domain.Credentials = loadedDomain.Credentials;

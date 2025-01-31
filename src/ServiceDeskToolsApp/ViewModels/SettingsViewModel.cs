@@ -80,8 +80,9 @@ public class SettingsViewModel : Screen
 		Domains.Add(newDomain);
 		var message = new UpdateDomainListEvent(newDomain, UpdateAction.Add);
 		await _events.PublishOnUIThreadAsync(message);
+		var appSettingsFile = $"{Directory.GetParent(App.ResourceAssembly.Location).FullName}/appsettings.json";
 
-		var json = await File.ReadAllTextAsync("appsettings.json");
+		var json = await File.ReadAllTextAsync(appSettingsFile);
 		JsonNode doc = JsonNode.Parse(json);
 		var jsonArray = doc["AvailableDomains"]["Domains"].AsArray();
 		jsonArray.Add(new { newDomain.Name, newDomain.Domain, newDomain.LdapPath });
@@ -94,7 +95,7 @@ public class SettingsViewModel : Screen
 			doc["ActiveDirectory"] = newNode;
 		}
 
-		await File.WriteAllTextAsync("appsettings.json", doc.ToString());
+		await File.WriteAllTextAsync(appSettingsFile, doc.ToString());
 
 		Domain = string.Empty;
 		Name = string.Empty;
@@ -107,8 +108,9 @@ public class SettingsViewModel : Screen
 		Domains.Remove(toDelete);
 		var message = new UpdateDomainListEvent(toDelete, UpdateAction.Delete);
 		await _events.PublishOnUIThreadAsync(message);
+		var appSettingsFile = $"{Directory.GetParent(App.ResourceAssembly.Location).FullName}/appsettings.json";
 
-		var json = await File.ReadAllTextAsync("appsettings.json");
+		var json = await File.ReadAllTextAsync(appSettingsFile);
 		JsonNode doc = JsonNode.Parse(json);
 		var jsonArray = doc["AvailableDomains"]["Domains"].AsArray();
 		jsonArray.Remove(jsonArray.Where(x => x["Name"].GetValue<string>() == toDelete.Name).First());
@@ -119,6 +121,6 @@ public class SettingsViewModel : Screen
 			doc["ActiveDirectory"].AsObject().Remove("LdapPath");
 		}
 
-		await File.WriteAllTextAsync("appsettings.json", doc.ToString());
+		await File.WriteAllTextAsync(appSettingsFile, doc.ToString());
 	}
 }
