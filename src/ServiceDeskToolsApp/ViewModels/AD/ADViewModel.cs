@@ -2,6 +2,8 @@
 using Caliburn.Micro;
 using EzActiveDirectory;
 using EzActiveDirectory.Models;
+using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Extensions.Logging;
 using ServiceDeskToolsApp.Models;
 using System;
@@ -187,6 +189,8 @@ namespace ServiceDeskToolsApp.ViewModels
 		public ICommand OpenRenameCommand => new RelayCommand(async () => await OpenRename());
 		public ICommand MustResetCommand { get; }
 		public ICommand HardSetCommand { get; }
+		public ICommand DisableUserCommand { get; }
+		public ICommand EnableUserCommand { get; }
 
 		public ADViewModel(ActiveDirectory activeDirectory, IWindowManager windowManager, IMapper mapper, ILogger<ADViewModel> logger)
 		{
@@ -194,8 +198,10 @@ namespace ServiceDeskToolsApp.ViewModels
 			_windowManager = windowManager;
 			_mapper = mapper;
 
-			MustResetCommand = new RelayCommand(() => _activeDirectory.Users.SaveProperty(SelectedUser.Path, Property.PasswordLastSet, 0));
-			HardSetCommand = new RelayCommand(() => _activeDirectory.Users.SaveProperty(SelectedUser.Path, Property.PasswordLastSet, -1));
+			MustResetCommand = new RelayCommand(async () => await UserMustChange(0));
+			HardSetCommand = new RelayCommand(async () => await UserMustChange(-1));
+			DisableUserCommand = new RelayCommand(DisableUser);
+			EnableUserCommand = new RelayCommand(EnableUser);
 		}
 
 		public async Task SearchAsync()
@@ -318,6 +324,8 @@ namespace ServiceDeskToolsApp.ViewModels
 			dynamic settings = new ExpandoObject();
 			settings.Title = $"{SelectedUser.DisplayName}'s Information";
 			settings.Owner = null;
+			settings.Height = 650;
+			settings.SizeToContent = SizeToContent.Width;
 			settings.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
 			await _windowManager.ShowWindowAsync(vm, null, settings);
@@ -333,6 +341,34 @@ namespace ServiceDeskToolsApp.ViewModels
 			settings.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
 			await _windowManager.ShowWindowAsync(vm, null, settings);
+		}
+		private void DisableUser()
+		{
+			if (_activeDirectory.Users.DisableAccount(SelectedUser.Path))
+			{
+				SelectedUser.IsActive = false;
+				SelectedUser.AccountControl = (int)AccountFlag.Disable;
+			}
+		}
+		private void EnableUser()
+		{
+			if (_activeDirectory.Users.EnableAccount(SelectedUser.Path))
+			{
+				SelectedUser.IsActive = true;
+				SelectedUser.AccountControl = (int)AccountFlag.Normal;
+			}
+		}
+		private async Task UserMustChange(int value)
+		{
+			try
+			{
+				_activeDirectory.Users.SaveProperty(SelectedUser.Path, Property.PasswordLastSet, value);
+			}
+			catch
+			{
+				SelectedUser.PasswordMustBeChanged = !SelectedUser.PasswordMustBeChanged;
+				await DialogManager.ShowMessageAsync((MetroWindow)App.Current.MainWindow, "Oops, Something went wrong", "Unable to change users password last set.");
+			}
 		}
 	}
 }

@@ -139,7 +139,12 @@
                     <ContextMenu x:Key="ItemContextMenu">
                         <MenuItem Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListView}}, Path=DataContext.OpenMoreInfoCommand}" Header="More Info" />
                         <MenuItem Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListView}}, Path=DataContext.OpenRenameCommand}" Header="Rename" />
-                        <MenuItem Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListView}}, Path=DataContext.OpenMigrationInfoCommand}" Header="Migration Info" />
+                        <MenuItem Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListView}}, Path=DataContext.EnableUserCommand}"
+                                  Header="Enable Account"
+                                  Visibility="{Binding IsActive, Converter={StaticResource BooleanToVisibilityConverter2}}" />
+                        <MenuItem Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListView}}, Path=DataContext.DisableUserCommand}"
+                                  Header="Disable Account"
+                                  Visibility="{Binding IsActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </ContextMenu>
                 </ListView.Resources>
                 <ListView.ItemContainerStyle>
@@ -166,7 +171,7 @@
                                        Source="/Images/Lock.png"
                                        Visibility="{Binding IsLockedOut, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 <TextBlock DockPanel.Dock="Left"
-                                           Foreground="{Binding IsActive, Converter={StaticResource BoolToColorConverter}}"
+                                           Foreground="{Binding IsActive, Converter={StaticResource BoolToColorConverter}, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
                                            Text="{Binding DisplayName}"
                                            TextTrimming="CharacterEllipsis" />
                             </DockPanel>
